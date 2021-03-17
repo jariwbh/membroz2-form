@@ -1,0 +1,75 @@
+<div class="main-content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="offset-xl-2 col-xl-8">
+
+                <div class="text-center" *ngIf="isLoadForms">
+                    <div class="loader">
+                        <svg class="circular" viewBox="25 25 50 50">
+                            <circle class="path" cx="50" cy="50" r="10" fill="none" stroke-width="2"
+                                stroke-miterlimit="10" />
+                        </svg>
+                    </div>
+                </div>
+
+                <h3 class="card-title">{{dispalyformname}}</h3>
+
+                <div *ngIf="viewVisibility && !isLoadPermission">
+
+                    <div class="loader" *ngIf="!_visibility">
+                        <svg class="circular" viewBox="25 25 50 50">
+                            <circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="2"
+                                stroke-miterlimit="10" />
+                        </svg>
+                    </div>
+
+                    <div class="wizard-container mrt20" *ngIf="_sectionLists && _sectionLists.length !== 0">
+                        <div class="tab-content">
+                            <app-form-builder
+                                [tabData]=_sectionLists
+                                [formsModel]=formsModel
+                                [bindIdData]=bindIdData
+                                [langResource]="langResource"
+                                [isdisablesavebutton]="isdisablesavebutton"
+                                (childSubmitData)="getSubmittedData($event)"
+                                (disabledDirtyForm)="disabledDirtyData($event)">
+                            </app-form-builder>
+                            <!-- <div *ngIf="!viewPermission" class="card-content">
+                                You have No view permission
+                            </div> -->
+                        </div>
+                        <div class="wizard-footer">
+                            <div class="pull-right">
+                            </div>
+                            <div class="pull-left">
+                            </div>
+                            <div class="clearfix"></div>
+                        </div>
+                    </div>
+
+
+                </div>
+
+                <div class="card" *ngIf="isLoadPermission">
+                    <div class="card-header card-header-icon" data-background-color="rose">
+                        <i class="material-icons">card_membership</i>
+                    </div>
+                    <div class="loader">
+                        <svg class="circular" viewBox="25 25 50 50">
+                            <circle class="path" cx="50" cy="50" r="10" fill="none" stroke-width="2"
+                                stroke-miterlimit="10" />
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="card" *ngIf="!viewVisibility && !isLoadPermission">
+                    <div class="card-header card-header-icon" data-background-color="rose">
+                        <i class="material-icons">card_membership</i>
+                    </div>
+                    <div class="card-content">You have No permission for this Tab</div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,116 @@
+/*!
+
+ =========================================================
+ * Material Dashboard PRO Angular - v2.5.0
+ =========================================================
+
+ * Product Page: https://www.creative-tim.com/product/material-dashboard-pro-angular2
+ * Copyright 2018 Creative Tim (https://www.creative-tim.com)
+
+ * Designed by www.invisionapp.com Coded by www.creative-tim.com
+
+ =========================================================
+
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+ */
+
+ @namespace svg url(http://www.w3.org/2000/svg);
+
+ @font-face {
+    font-family: "Poppins";
+    src: url("../fonts/Poppins-Regular.eot");
+    src: url("../fonts/Poppins-Regular.eot?#iefix") format("embedded-opentype"),  url("../fonts/Poppins-Regular.woff2") format("woff2"),  url("../fonts/Poppins-Regular.woff") format("woff"),  url("../fonts/Poppins-Regular.ttf") format("truetype"),  url("../fonts/Poppins-Regular.svg#Poppins-Regular") format("svg");
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face {
+    font-family: "Poppins";
+    src: url("../fonts/Poppins-Medium.eot");
+    src: url("../fonts/Poppins-Medium.eot?#iefix") format("embedded-opentype"), url("../fonts/Poppins-Medium.woff2") format("woff2"), url("../fonts/Poppins-Medium.woff") format("woff"), url("../fonts/Poppins-Medium.ttf") format("truetype"), url("../fonts/Poppins-Medium.svg#Poppins-Medium") format("svg");
+    font-weight: 500;
+    font-style: normal;    
+}
+
+ @font-face {
+     font-family:"Poppins";     
+     src: url("../fonts/Poppins-Bold.eot");
+     src: url("../fonts/Poppins-Bold.eot?#iefix") format("embedded-opentype"),  url("../fonts/Poppins-Bold.woff2") format("woff2"),  url("../fonts/Poppins-Bold.woff") format("woff"),  url("../fonts/Poppins-Bold.ttf") format("truetype"),  url("../fonts/Poppins-Bold.svg#Poppins-Bold") format("svg");
+     font-weight: bold;
+     font-style: normal;
+ }
+
+
+ 
+
+ @import "~@angular/material/prebuilt-themes/indigo-pink.css";
+
+ @import "core/variables";
+ @import "core/mixins";
+ @import "~bootstrap/scss/bootstrap";
+ @import "core/reboot";
+
+// Core Components
+@import "core/layout";
+@import "core/buttons";
+@import "core/checkboxes";
+@import "dashboard/cards";
+@import "core/custom-forms";
+@import "core/switches";
+@import "core/example-pages";
+@import "core/radios";
+@import "core/carousel";
+@import "dashboard/forms";
+@import "core/input-group";
+@import "core/list-group";
+@import "core/nav";
+@import "core/images";
+@import "dashboard/navbar";
+@import "core/badges";
+@import "dashboard/alerts";
+@import "core/pagination";
+@import "core/pills";
+@import "core/info-areas";
+@import "core/type";
+@import "core/tabs";
+@import "core/footers";
+@import "core/tooltip";
+@import "core/popover";
+@import "core/modal";
+@import "core/dropdown";
+@import "core/headers";
+@import "core/drawer";
+@import "core/progress";
+@import "core/togglebutton";
+@import "core/ripples";
+@import "dashboard/rtl";
+@import "dashboard/sidebar-and-main-panel";
+@import "dashboard/timeline";
+@import "dashboard/fixed-plugin";
+@import "dashboard/tables";
+@import "dashboard/misc";
+@import "dashboard/pages";
+@import "dashboard/membroz";
+
+ // Components for PRO
+ @import "dashboard/social-buttons";
+ @import "dashboard/fileupload";
+
+ //plugin css
+ @import "plugins/plugin-nouislider";
+ @import "plugins/animate";
+ @import "plugins/sweetalert2";
+ // @import "plugins/datatables.net";
+ @import "plugins/jquery.jvectormap";
+ @import "plugins/plugin-datetime-picker";
+ @import "plugins/fullcalendar";
+ @import "plugins/wizard-card";
+ @import "plugins/chartist";
+ @import "~chartist/dist/scss/chartist";
+ @import "plugins/select-bootstrap";
+ @import "plugins/perfect-scrollbar";
+ @import "plugins/plugin-tagsinput";
+
+
+
+@import "dashboard/responsive";

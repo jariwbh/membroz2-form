@@ -1,0 +1,19 @@
+@mixin navbar-colors($color, $link-color) {
+    color: $link-color;
+    background-color: $color !important;
+    
+    box-shadow: 0 1px 4px 0px rgba(0, 0, 0, 0.09), 0 2px 5px -5px rgba(0, 0, 0, 0.10);
+
+    .dropdown-item:hover,
+    .dropdown-item:focus{
+      @include shadow-small-color($color);
+      background-color: $color;
+      color: $link-color;
+    }
+
+    .navbar-toggler{
+        .navbar-toggler-icon{
+            background-color: $link-color;
+        }
+    }
+}

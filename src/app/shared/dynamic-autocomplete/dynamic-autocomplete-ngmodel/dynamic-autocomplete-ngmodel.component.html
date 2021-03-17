@@ -1,0 +1,28 @@
+<mat-form-field class="example-full-width">
+    <input 
+        type="text"
+        aria-label="Number"
+        matInput
+        [formControl]="myControl"
+        [matAutocomplete]="auto"
+        (change)="handleEmptyInput($event)"
+        (click)="preloaddata()">
+    <mat-autocomplete 
+        #auto="matAutocomplete" 
+        [displayWith]="displayFn" 
+        (optionSelected)="optionSelected($event.option)">
+        <mat-option *ngIf="isLoadingBox" class="is-loading">
+            <mat-spinner diameter="50"></mat-spinner>
+        </mat-option>
+        <ng-container *ngIf="!isLoadingBox && options.length > 0">
+            <mat-option *ngFor="let option of filteredOptions | async" [value]="option">
+            {{option.autocomplete_displayname}}
+            </mat-option>
+        </ng-container>
+        <ng-container *ngIf="!isLoadingBox && options.length == 0">
+            <mat-option>
+              <span>No Record</span>
+            </mat-option>
+        </ng-container>
+    </mat-autocomplete>
+</mat-form-field>
