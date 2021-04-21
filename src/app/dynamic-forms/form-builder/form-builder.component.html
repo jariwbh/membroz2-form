@@ -973,7 +973,7 @@
                                                                             <mat-form-field appearance="fill">
                                                                                 <mat-select [formControlName]="groupfield.fieldname" multiple>
                                                                                   <mat-optgroup 
-                                                                                    *ngFor="let grp of group.formfieldfilterValue" 
+                                                                                    *ngFor="let grp of groupfield.formfieldfilterValue" 
                                                                                     [label]="grp.name"
                                                                                     [disabled]="grp.disabled">
                                                                                     <mat-option *ngFor="let pokemon of grp.pokemon" [value]="pokemon.value">
