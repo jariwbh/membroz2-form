@@ -1,4 +1,3 @@
-
 import { Component, OnInit, Input, Output, EventEmitter, AfterViewInit, AfterViewChecked , ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormGroup, FormArray, FormControl, FormBuilder, Validators } from '@angular/forms';
@@ -26,6 +25,13 @@ import swal from 'sweetalert2';
   moduleId: module.id,
   selector: 'app-form-builder',
   templateUrl: './form-builder.component.html',
+  styles: [
+    `
+    ::ng-deep .mat-select-panel .mat-pseudo-checkbox {
+      border: 2px solid !important;
+    }
+    `
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FormBuilderComponent extends BaseLiteComponemntComponent implements OnInit, AfterViewInit, AfterViewChecked {
@@ -63,6 +69,7 @@ export class FormBuilderComponent extends BaseLiteComponemntComponent implements
    reason: any;
 
    form: FormGroup;
+   arr: FormArray;
    submitted: boolean;
 
    recprdEligibilityForWfPermission: boolean = false;
@@ -135,12 +142,15 @@ export class FormBuilderComponent extends BaseLiteComponemntComponent implements
       }
 
       this._sectionLists = this.tabDataValue;
+      
 
       this._sectionLists.forEach(ele => {
         ele.forEach(element => {
+
           if (element.groupname) {
             this._groups.push(element);
           }
+
           if (element.fieldtype == "image" || element.fieldtype == "multi_image" || element.fieldtype == "attachment" || element.fieldtype == "gallery") {
             if (!this.formImageArray[element.fieldname]) {
               this.formImageArray[element.fieldname] = [];
@@ -329,6 +339,12 @@ export class FormBuilderComponent extends BaseLiteComponemntComponent implements
                   extension: extension,
                   originalfilename: fileItem.data.original_filename
                 };
+
+                if(element.multiselect == false) {
+                  this.formImageArray[fieldnameTags] = [];
+                  this.groupformImageArray[fieldnameTags] = [];
+
+                }
   
                 this.formImageArray[fieldnameTags].push(fileInfo);
                 this.groupformImageArray[fieldnameTags].push(fileInfo);
@@ -371,7 +387,8 @@ export class FormBuilderComponent extends BaseLiteComponemntComponent implements
                       this.showNotification("top", "right", message, "danger");
                       break;
                     default:
-                      message = 'Error trying to upload file '+item.name;
+                      //message = 'Error trying to upload file '+item.name;
+                      message = 'Please upload image file only.';
                       this.showNotification("top", "right", message, "danger");
                       break;
                   }
@@ -413,133 +430,63 @@ export class FormBuilderComponent extends BaseLiteComponemntComponent implements
     }
 
     makeForm() {
-      
       const group: any = {};
       this._sectionLists.forEach(ele => {
         ele.forEach(element => {
-          if (element.groupname) {
-            group[element.fieldname] = new FormControl([]);
-          } else {
-
-            if (element.fieldtype == 'checkbox') {
-              group[element.fieldname] = new FormControl([])
-            } else if (element.fieldtype == 'readonly') {
-              group[element.fieldname] = new FormControl(element.defaultvalue);
-            } else if (element.fieldtype == 'primaryemail' || element.fieldtype == 'secondaryemail') {
-
-              if (element.required == "yes") {
-                group[element.fieldname] = new FormControl(null, Validators.compose([Validators.required, BasicValidators.email]));
-              } else {
-                group[element.fieldname] = new FormControl(null, Validators.compose([BasicValidators.email]));
-              }
-
+          if(element.fieldtype == 'group') {
+            // if(this.bindIdDataValue) {
+            //   if(this.bindIdDataValue && this.bindIdDataValue['property'] && this.bindIdDataValue['property'][element.fieldname] && this.bindIdDataValue['property'][element.fieldname].length > 0) {
+            //     group[element.fieldname] = this.fb.array([])
+            //   } else {
+            //     group[element.fieldname] = this.fb.array([this.createItem(element.fields)])
+            //   }
+            // } else {
+              group[element.fieldname] = this.fb.array([this.createItem(element.fields)])
+            //}
+          } else if (element.fieldtype == 'checkbox') {
+            group[element.fieldname] = new FormControl([])
+          } else if (element.fieldtype == 'readonly') {
+            group[element.fieldname] = new FormControl(element.defaultvalue);
+          } else if (element.fieldtype == 'mobile' || element.fieldtype == 'alternatenumber') {
+            if (element.required) {
+              group[element.fieldname] = new FormControl(null, Validators.compose([Validators.required, ValidMobileNumberValidator.onlyvalidmobilenumber]));
             } else {
-              // if (element.validationData) {
-              //   if (element.validationData === 'requiredVal') {
-              //     element.isAsterisk = true;
-              //     if(element.fieldtype == "slide_toggle") {
-              //       group[element.fieldname] = new FormControl(false, Validators.compose([Validators.requiredTrue]));
-              //     } else {
-              //       group[element.fieldname] = new FormControl(null, Validators.compose([Validators.required]));
-              //     }
-              //   } else if (element.validationData === 'emailVal') {
-
-              //     if (element.isMandatory == "yes") {
-              //       element.isAsterisk = true;
-              //       group[element.fieldname] = new FormControl(null, Validators.compose([Validators.required, BasicValidators.email]));
-              //     } else {
-              //       group[element.fieldname] = new FormControl(null, Validators.compose([BasicValidators.email]));
-              //     }
-
-              //   } else if (element.validationData === 'urlVal') {
-
-              //     if (element.isMandatory == "yes") {
-              //       element.isAsterisk = true;
-              //       group[element.fieldname] = new FormControl(null, Validators.compose([Validators.required, ValidUrlValidator.insertonlyvalidurl]));
-              //     } else {
-              //       group[element.fieldname] = new FormControl(null, Validators.compose([ValidUrlValidator.insertonlyvalidurl]));
-              //     }
-
-              //   } else if (element.validationData === 'onlyNumberVal') {
-
-              //     if (element.isMandatory == "yes") {
-              //       element.isAsterisk = true;
-              //       group[element.fieldname] = new FormControl(null, Validators.compose([Validators.required, OnlyNumberValidator.insertonlynumber]));
-              //     } else {
-              //       group[element.fieldname] = new FormControl(null, Validators.compose([OnlyNumberValidator.insertonlynumber]));
-              //     }
-              //   } else if (element.validationData === 'mobileNumberVal') {
-
-              //     if (element.isMandatory == "yes") {
-              //       element.isAsterisk = true;
-              //       group[element.fieldname] = new FormControl(null, Validators.compose([Validators.required, ValidMobileNumberValidator.onlyvalidmobilenumber]));
-              //     } else {
-              //       group[element.fieldname] = new FormControl(null, Validators.compose([ValidMobileNumberValidator.onlyvalidmobilenumber]));
-              //     }
-
-              //   } else if (element.validationData === 'onlyNumberOrDecimalVal') {
-
-              //     if (element.isMandatory == "yes") {
-              //       element.isAsterisk = true;
-              //       group[element.fieldname] = new FormControl(null, Validators.compose([Validators.required, OnlyNumberOrDecimalValidator.insertonlynumberordecimal]));
-              //     } else {
-              //       group[element.fieldname] = new FormControl(null, Validators.compose([OnlyNumberOrDecimalValidator.insertonlynumberordecimal]));
-              //     }
-
-              //   } else if (element.validationData === 'validPercentVal') {
-              //     if (element.isMandatory == "yes") {
-              //       element.isAsterisk = true;
-              //       group[element.fieldname] = new FormControl(null, Validators.compose([Validators.required, ValidPercValidator.insertonlyvalidperc]));
-              //     } else {
-              //       group[element.fieldname] = new FormControl(null, Validators.compose([ValidPercValidator.insertonlyvalidperc]));
-              //     }
-              //   } else if (element.validationData === 'dateOfBirthVal') {
-              //     if (element.isMandatory == "yes") {
-              //       element.isAsterisk = true;
-              //       group[element.fieldname] = new FormControl(null, Validators.compose([Validators.required]));
-              //     } else {
-              //       group[element.fieldname] = new FormControl(null);
-              //     }
-              //   } else if (element.validationData === 'adultDateVal') {
-
-              //     if (element.isMandatory == "yes") {
-              //       element.isAsterisk = true;
-              //       group[element.fieldname] = new FormControl(null, Validators.compose([Validators.required, overEighteen.overEighteen]));
-              //     } else {
-              //       group[element.fieldname] = new FormControl(null, Validators.compose([overEighteen.overEighteen]));
-              //     }
-
-              //   } else {
-              //     group[element.fieldname] = new FormControl(null);
-              //   }
-
-              // } else {
-                if (element.required) {
-                  element.isAsterisk = true;
-                  if(element.fieldtype == "slide_toggle") {
-                    group[element.fieldname] = new FormControl(false, Validators.compose([Validators.requiredTrue]));
-                  } else {
-                    group[element.fieldname] = new FormControl(null, Validators.compose([Validators.required]));
-                  }
-                } else {
-                  group[element.fieldname] = new FormControl(null);
-                }
-              //}
+              group[element.fieldname] = new FormControl(null, Validators.compose([ValidMobileNumberValidator.onlyvalidmobilenumber]));
+            }
+          } else if (element.fieldtype == 'primaryemail' || element.fieldtype == 'secondaryemail') {
+            if (element.required) {
+              group[element.fieldname] = new FormControl(null, Validators.compose([Validators.required, BasicValidators.email]));
+            } else {
+              group[element.fieldname] = new FormControl(null, Validators.compose([BasicValidators.email]));
+            }
+          } else {
+            if (element.required && element.fieldtype == "slide_toggle") {
+              group[element.fieldname] = new FormControl(false, Validators.compose([Validators.requiredTrue]));
+            } else if (element.required) {
+              group[element.fieldname] = new FormControl(null, Validators.compose([Validators.required]));
+            } else {
+              group[element.fieldname] = new FormControl(null);
             }
           }
-
-          
         });
       });
 
       this.dynamicForm = this.fb.group(group);
 
-
       setTimeout(() => {
         this._sectionLists.forEach(ele => {
           ele.forEach(element => {
+            
             if(this.bindIdDataValue && this.bindIdDataValue['property'] && this.bindIdDataValue['property'][element.fieldname] && element.fieldname) {
-              this.dynamicForm.controls[element.fieldname].setValue(this.bindIdDataValue['property'][element.fieldname]);
+              if(element.fieldtype !== "group") {
+                this.dynamicForm.controls[element.fieldname].setValue(this.bindIdDataValue['property'][element.fieldname]);
+              } else if (element.fieldtype == "group") {
+                
+                // let control = <FormArray>this.dynamicForm.controls[element.fieldname];
+                // this.bindIdDataValue['property'][element.fieldname].forEach(x => {
+                //   control.push(this.fb.group(x));
+                // })
+              }
             }
 
             if(element.fieldtype == "hidden" || element.fieldtype == "readonly") {
@@ -549,6 +496,73 @@ export class FormBuilderComponent extends BaseLiteComponemntComponent implements
         });
       }, 500);
 
+    }
+
+    editItem(element: any) {
+      const group: any = {};
+      let control = <FormArray>this.dynamicForm.controls[element.fieldname];
+      this.bindIdDataValue['property'][element.fieldname].map((item, index) => {
+        element.fields.forEach(elementFields => {
+          if(item[elementFields.fieldname]) {
+            if (elementFields.fieldtype == 'checkbox') {
+              group[elementFields.fieldname] = new FormControl([item[elementFields.fieldname]])
+            } else if (elementFields.fieldtype == 'readonly') {
+              group[elementFields.fieldname] = new FormControl(item[elementFields.fieldname]);
+            } else if (elementFields.fieldtype == 'mobile' || elementFields.fieldtype == 'alternatenumber') {
+              if (elementFields.required) {
+                group[elementFields.fieldname] = new FormControl(item[elementFields.fieldname], Validators.compose([Validators.required, ValidMobileNumberValidator.onlyvalidmobilenumber]));
+              } else {
+                group[elementFields.fieldname] = new FormControl(item[elementFields.fieldname], Validators.compose([ValidMobileNumberValidator.onlyvalidmobilenumber]));
+              }
+            }  else if (elementFields.fieldtype == 'primaryemail' || elementFields.fieldtype == 'secondaryemail') {
+              if (elementFields.required) {
+                group[elementFields.fieldname] = new FormControl(item[elementFields.fieldname], Validators.compose([Validators.required, BasicValidators.email]));
+              } else {
+                group[elementFields.fieldname] = new FormControl(item[elementFields.fieldname], Validators.compose([BasicValidators.email]));
+              }
+            } else {
+              if (elementFields.required && element.fieldtype == "slide_toggle") {
+                group[elementFields.fieldname] = new FormControl(false, Validators.compose([Validators.requiredTrue]));
+              } else if (elementFields.required) {
+                group[elementFields.fieldname] = new FormControl(item[elementFields.fieldname], Validators.compose([Validators.required]));
+              } else {
+                group[elementFields.fieldname] = new FormControl(item[elementFields.fieldname]);
+              }
+            }
+            control.push(this.fb.group(group));
+          }
+        });
+      })
+    }
+
+    deleteGroupItem(fields: any, index: any) {
+      (this.dynamicForm.get(fields.fieldname) as FormArray).removeAt(index);
+    }
+
+    createItem(fields: any) {
+      const group: any = {};
+      fields.forEach(element => {
+        if (element.fieldtype == 'checkbox') {
+          group[element.fieldname] = new FormControl([])
+        } else if (element.fieldtype == 'readonly') {
+          group[element.fieldname] = new FormControl(element.defaultvalue);
+        } else if (element.fieldtype == 'primaryemail' || element.fieldtype == 'secondaryemail') {
+          if (element.required) {
+            group[element.fieldname] = new FormControl(null, Validators.compose([Validators.required, BasicValidators.email]));
+          } else {
+            group[element.fieldname] = new FormControl(null, Validators.compose([BasicValidators.email]));
+          }
+        } else {
+          if (element.required && element.fieldtype == "slide_toggle") {
+            group[element.fieldname] = new FormControl(false, Validators.compose([Validators.requiredTrue]));
+          } else if (element.required) {
+            group[element.fieldname] = new FormControl(null, Validators.compose([Validators.required]));
+          } else {
+            group[element.fieldname] = new FormControl(null);
+          }
+        }
+      });
+      return this.fb.group(group);
     }
 
     groupBy(collection: any, property: any) {
@@ -570,15 +584,18 @@ export class FormBuilderComponent extends BaseLiteComponemntComponent implements
       return result;
     }
 
-    onDynamicFormSubmit(value: any, isValid: boolean) {
+    addItem(fields: any) {
+      this.arr = this.dynamicForm.get([fields.fieldname]) as FormArray;
+      this.arr.push(this.createItem(fields.fields));
+    }
 
+    onDynamicFormSubmit(value: any, isValid: boolean) {
       this.dynamicSubmitted = true;
       this.isdisablesavebuttonValue = true;
       if (!isValid) {
-        console.log("value", value);
-        console.log("isValid", isValid);
+        
         this.isdisablesavebuttonValue = false;
-        this.showNotification('top', 'right', 'Validation failed!!!', 'danger');
+        this.showNotification('top', 'right', 'Fill in required fields !!', 'danger');
         return false;
       } else {
 
@@ -586,105 +603,58 @@ export class FormBuilderComponent extends BaseLiteComponemntComponent implements
 
         this._sectionLists.forEach(ele => {
           ele.forEach(ele2 => {
-            if (!ele2.groupname && (ele2.fieldtype == 'lookup' || ele2.fieldtype == 'form' || ele2.fieldtype == 'formdata')) {
+
+            if (ele2.fieldtype == 'lookup' || ele2.fieldtype == 'form' || ele2.fieldtype == 'formdata') {
+
               if (this.dynamicForm.value[ele2.fieldname] && this.dynamicForm.value[ele2.fieldname]['autocomplete_id']) {
                 this.dynamicForm.value[ele2.fieldname] = this.dynamicForm.value[ele2.fieldname]['autocomplete_id'];
               }
-            } else if (!ele2.groupname && (ele2.fieldtype == 'image' || ele2.fieldtype == 'multi_image' ||  ele2.fieldtype == 'attachment' ||  ele2.fieldtype == 'gallery')) {
+
+            } else if (ele2.fieldtype == 'image' || ele2.fieldtype == 'multi_image' ||  ele2.fieldtype == 'attachment' ||  ele2.fieldtype == 'gallery') {
               for (let key in this.formImageArray) {
                 if (key == ele2.fieldname) {
                   this.dynamicForm.value[ele2.fieldname] = this.formImageArray[key];
                 }
               }
-            }
+            } else if (ele2.fieldtype == "group") {
+              ele2.fields.forEach(elementGroup => {
+                if (elementGroup.fieldtype == 'lookup' || elementGroup.fieldtype == 'form' || elementGroup.fieldtype == 'formdata') {
+                  
+                  if (this.dynamicForm.value[ele2.fieldname] && this.dynamicForm.value[ele2.fieldname].length > 0) {
 
-            if(ele2.groupname && ele2.groupvalidation) {
+                    this.dynamicForm.value[ele2.fieldname].forEach(elementGroupValue => {
+                      if(elementGroupValue && elementGroupValue[elementGroup.fieldname] && elementGroupValue[elementGroup.fieldname]['autocomplete_id']) {
+                        elementGroupValue[elementGroup.fieldname] = elementGroupValue[elementGroup.fieldname]['autocomplete_id']
+                      }
+                    });
+                    
+                  }
+                  
+                } else if (elementGroup.fieldtype == 'image' || elementGroup.fieldtype == 'multi_image' ||  elementGroup.fieldtype == 'attachment' ||  elementGroup.fieldtype == 'gallery') {
+                  for (let key in this.formImageArray) {
+                    if (key == elementGroup.fieldname) {
+                      // if (this.dynamicForm.value[ele2.fieldname] && this.dynamicForm.value[ele2.fieldname].length > 0) {
+                      //   this.dynamicForm.value[ele2.fieldname].forEach(elementGroupValue => {
+                          
+                      //       elementGroupValue[elementGroup.fieldname] = elementGroupValue[elementGroup.fieldname]['autocomplete_id']
+                          
+                      //   });
+                      // }
 
-              var groupValidationObj = groupValidationArray.find(p => p.groupname == ele2.groupname);
-              if(!groupValidationObj) {
-                let obj = {
-                  groupname: ele2.groupname,
-                  groupvalidation: ele2.groupvalidation
+                      //this.dynamicForm.value[ele2.fieldname] = this.formImageArray[key];
+                    }
+                  }
                 }
-                groupValidationArray.push(obj);
-              }
+              });
             }
-
 
           });
         });
+       
+        //console.log("this.dynamicForm.value", this.dynamicForm.value);
+        this.childSubmitData.emit(this.dynamicForm.value);
 
-        this._groupLists.forEach(element => {
-          let grpname = element[0]['groupname'];
-
-
-
-          if (this._groupAddedValue[grpname].length !== 0) {
-
-            let fieldName;
-            element.forEach(ele => {
-              fieldName = ele.fieldname;
-              delete this.dynamicForm.value[fieldName];
-            });
-            this.dynamicForm.value[grpname] = this._groupAddedValue[grpname];
-
-
-          } else {
-
-            let grp = [];
-            let fieldName;
-            let val;
-            element.forEach(ele => {
-              fieldName = ele.fieldname;
-              val = ele.fieldname;
-              grp[fieldName] = this.dynamicForm.value[fieldName];
-              grp['id'] = this.uuid();
-              delete this.dynamicForm.value[fieldName];
-            });
-            this.dynamicForm.value[grpname] = grp;
-
-          }
-        });
-
-        var cnt = 0;
-
-        if(groupValidationArray && groupValidationArray.length !== 0) {
-          groupValidationArray.forEach(element => {
-            if(element.groupname) {
-              if(element.groupvalidation) {
-
-                if(Number(this.dynamicForm.value[element.groupname].length) < Number(element.groupvalidation.minitems)) {
-                  cnt++;
-                  this.showNotification('top', 'right', element.groupname + ' Minimum ' + element.groupvalidation.minitems + ' record required', 'danger');
-                  return;
-                }
-
-                if(Number(this.dynamicForm.value[element.groupname].length) > Number(element.groupvalidation.maxitems)) {
-
-                  cnt++;
-                  this.showNotification('top', 'right', element.groupname + ' Maximum ' + element.groupvalidation.maxitems + ' record are allowed', 'danger');
-                  return;
-                }
-              }
-
-            }
-          });
-
-          if(cnt == 0) {
-            // console.log("this.dynamicForm.value", this.dynamicForm.value);
-            this.childSubmitData.emit(this.dynamicForm.value);
-
-          } else {
-            this.dynamicSubmitted = false;
-            this.isdisablesavebuttonValue = false;
-            this.showNotification('top', 'right', 'Validation failed for group submission', 'danger');
-            return;
-          }
-        } else {
-          //console.log("this.dynamicForm.value", this.dynamicForm.value);
-          this.childSubmitData.emit(this.dynamicForm.value);
-
-        }
+        
       }
     }
 
@@ -1554,7 +1524,7 @@ export class FormBuilderComponent extends BaseLiteComponemntComponent implements
                   temp.disabledDirtyForm.emit(redirect_url);
                 }
               }, (err) =>{
-                console.log("err", err);
+                console.error("err", err);
               });
           } else {
           swal.fire({
@@ -1625,7 +1595,7 @@ export class FormBuilderComponent extends BaseLiteComponemntComponent implements
                 varTemp._router.navigate(['/pages/admins/automation/workflow/approval-lists']);
               }
           }, (err) =>{
-            console.log("err", err);
+            console.error("err", err);
           });
         } else {
           swal.fire({
@@ -1687,7 +1657,7 @@ export class FormBuilderComponent extends BaseLiteComponemntComponent implements
                   varTemp._router.navigate(['/pages/admins/automation/workflow/approval-lists']);
                 }
             }, (err) =>{
-              console.log("err", err);
+              console.error("err", err);
             });
           } else {
             swal.fire({
@@ -1709,7 +1679,14 @@ export class FormBuilderComponent extends BaseLiteComponemntComponent implements
     }
 
     onItemAdded(itemToBeAdded: any) {
-      // console.log('Item to be added: ', itemToBeAdded);
+      
     }
+
+    getContactsFormGroup(fields: any, index: any): FormGroup {
+      this.arr = this.form.get(fields.fieldname) as FormArray;
+      const formGroup = this.arr.controls[index] as FormGroup;
+      return formGroup;
+    }
+    
 
 }

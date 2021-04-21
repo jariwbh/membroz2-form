@@ -1,5 +1,10 @@
-<form #formtext *ngIf="dynamicForm" (ngSubmit)="onDynamicFormSubmit(dynamicForm.value, dynamicForm.valid)"
-    [formGroup]="dynamicForm" novalidate class="form-horizontal">
+<form
+    #formtext 
+    *ngIf="dynamicForm" 
+    (ngSubmit)="onDynamicFormSubmit(dynamicForm.value, dynamicForm.valid)"
+    [formGroup]="dynamicForm" 
+    novalidate 
+    class="form-horizontal">
     <div class="card" *ngFor="let section of _sectionLists">
         <div class="card-body">
             <div class="row">
@@ -11,7 +16,7 @@
                         <ng-container *ngFor="let fields of section; let lst = last">
                             <ng-container [ngSwitch]="fields.fieldtype">
 
-                                <ng-container *ngIf="fields.fieldtype !== 'hidden'">
+                                <ng-container *ngIf="fields.fieldtype !== 'hidden' && fields.fieldtype !== 'group'">
                                     <div [ngClass]="fields.colspan == '1'  ? 'col-sm-12' : 'col-sm-6'">
 
                                         <label class="col-form-label">
@@ -116,7 +121,7 @@
                                                 <mat-select
                                                     [formControlName]="fields.fieldname"
                                                     multiple>
-                                                    <mat-option value="">Select {{fields.fielddisplaytext}}</mat-option>
+                                                    <mat-option value="">Select {{fields.displayname}}</mat-option>
                                                     <mat-option
                                                         *ngFor="let opt of fields.lookupdata"
                                                         [value]="opt.value">
@@ -262,8 +267,6 @@
                                             </mat-form-field>
                                         </ng-container>
 
-                                        
-
                                         <ng-container *ngSwitchCase="'disclaimer'">
                                             <span style="color: red;" class="form-control-static">{{fields.defaultvalue}}</span>
                                             <mat-form-field class="example-full-width" [hidden]="true">
@@ -280,9 +283,10 @@
 
                                         <ng-container *ngSwitchCase="'mobile'">
                                             <mat-form-field
+                                                hintLabel="Max {{fields?.maxlength}} characters"
                                                 class="example-full-width">
                                                 <input
-                                                    type="number"
+                                                    [maxlength]="fields?.maxlength" 
                                                     matInput
                                                     [formControlName]="fields.fieldname">
                                             </mat-form-field>
@@ -290,9 +294,10 @@
 
                                         <ng-container *ngSwitchCase="'alternatenumber'">
                                             <mat-form-field
+                                                hintLabel="Max {{fields?.maxlength}} characters"
                                                 class="example-full-width">
                                                 <input
-                                                    type="number"
+                                                    [maxlength]="fields?.maxlength" 
                                                     matInput
                                                     [formControlName]="fields.fieldname">
                                             </mat-form-field>
@@ -327,12 +332,32 @@
                                         </ng-container>
 
                                         <ng-container *ngSwitchCase="'form'">
-                                            <dynamic-autocomplete
-                                                [formControlName]="fields.fieldname"
-                                                [setting]="fields"
-                                                [dbvalue]="fields.value"
-                                                (added)="onItemAdded($event)">
-                                            </dynamic-autocomplete>
+
+                                            <ng-container *ngIf="fields && fields.multiselect; else formAutoComplete">
+                                                <mat-form-field class="example-full-width">
+                                                    <mat-select
+                                                        [formControlName]="fields.fieldname"
+                                                        multiple>
+                                                        <mat-option
+                                                            *ngFor="let opt of fields.formfieldfilterValue"
+                                                            [value]="opt.id">
+                                                            {{opt.itemName}}
+                                                        </mat-option>
+                                                    </mat-select>
+                                                </mat-form-field>
+                                            </ng-container>
+
+                                            <ng-template #formAutoComplete>
+                                                <dynamic-autocomplete
+                                                    [formControlName]="fields.fieldname"
+                                                    [setting]="fields"
+                                                    [dbvalue]="fields.value"
+                                                    (added)="onItemAdded($event)">
+                                                </dynamic-autocomplete>
+                                            </ng-template>
+
+                                            
+
                                         </ng-container>
 
                                         <ng-container *ngSwitchCase="'fullname'">
@@ -380,9 +405,6 @@
                                             </mat-form-field>
                                         </ng-container>
 
-
-                                        
-
                                         <ng-container *ngSwitchCase="'slide_toggle'">
                                             <div class="mt-2">
                                                 <mat-slide-toggle
@@ -397,6 +419,8 @@
                                             <mat-form-field class="example-full-width">
                                                 <input
                                                     type="number"
+                                                    [min]="fields.min === 0 ? 0 : fields.min ? fields.min : -999999999999999"
+                                                    [max]="fields.max ? fields.max : 999999999999999"
                                                     matInput
                                                     [formControlName]="fields.fieldname">
                                             </mat-form-field>
@@ -428,52 +452,58 @@
                                             </mat-form-field>
                                         </ng-container>
 
-                                        <ng-container *ngSwitchCase="'rating'">
-                                            <ngb-rating 
-                                                max="{{fields.maxrating}}"
-                                                [(rate)]="fields.value"
-                                                [formControlName]="fields.fieldname">
-                                            </ngb-rating>
+                                        <ng-container *ngSwitchCase="'category_list'">
+                                            <mat-form-field appearance="fill">
+                                                <mat-select [formControlName]="fields.fieldname" multiple>
+                                                  <mat-optgroup 
+                                                    *ngFor="let group of fields.formfieldfilterValue" 
+                                                    [label]="group.name"
+                                                    [disabled]="group.disabled">
+                                                    <mat-option *ngFor="let pokemon of group.pokemon" [value]="pokemon.value">
+                                                      {{pokemon.viewValue}}
+                                                    </mat-option>
+                                                  </mat-optgroup>
+                                                </mat-select>
+                                              </mat-form-field>
                                         </ng-container>
 
+                                        <span class="help-block">{{fields?.description}}</span>
 
-                                        <span class="help-block">{{fields.description}}</span>
-
+                                        <!-- style="margin-left:18%;" -->
                                         <div
-                                            style="margin-left:18%;"
                                             [hidden]="dynamicForm.get([fields.fieldname]).valid || (dynamicForm.get([fields.fieldname]).pristine && !dynamicSubmitted)"
                                             class="text-danger">
 
                                             <small *ngIf="dynamicForm.get([fields.fieldname]).hasError('required')" class="error-label">
-                                                * {{fields.fielddisplaytext}} is Required
+                                                * {{fields?.displayname}} is Required
                                             </small>
 
                                             <small *ngIf="dynamicForm.get([fields.fieldname]).hasError('adultDateVal')" class="error-label">
-                                                * {{fields.fielddisplaytext}} should be 18+
+                                                * {{fields?.displayname}} should be 18+
                                             </small>
 
                                             <small *ngIf="dynamicForm.get([fields.fieldname]).hasError('email')" class="error-label">
-                                                * {{fields.fielddisplaytext}} is Invalid Email
+                                                * {{fields?.displayname}} is Invalid
                                             </small>
 
                                             <small *ngIf="dynamicForm.get([fields.fieldname]).hasError('insertonlyvalidurl')" class="error-label">
-                                                * {{fields.fielddisplaytext}} is Invalid Url
+                                                * {{fields?.displayname}} is Invalid
                                             </small>
 
                                             <small *ngIf="dynamicForm.get([fields.fieldname]).hasError('insertonlynumber')" class="error-label">
-                                                * {{fields.fielddisplaytext}} is Invalid number
+                                                * {{fields?.displayname}} is Invalid number
                                             </small>
 
                                             <small *ngIf="dynamicForm.get([fields.fieldname]).hasError('onlyvalidmobilenumber')" class="error-label">
-                                                * {{fields.fielddisplaytext}} is Invalid.
+                                                * {{fields?.displayname}} is Invalid
                                             </small>
 
                                             <small *ngIf="dynamicForm.get([fields.fieldname]).hasError('insertonlynumberordecimal')" class="error-label">
-                                                * {{fields.fielddisplaytext}} is Invalid Number Or Decimal
+                                                * {{fields?.displayname}} is Invalid Number Or Decimal
                                             </small>
 
                                             <small *ngIf="dynamicForm.get([fields.fieldname]).hasError('validatePhoneNumber')" class="error-label">
-                                                * {{fields.fielddisplaytext}} is Invalid
+                                                * {{fields?.displayname}} is Invalid
                                             </small>
 
                                         </div>
@@ -486,6 +516,502 @@
                                         readonly
                                         [ngClass]="!((dynamicForm.get([fields.fieldname]).pristine && !dynamicSubmitted) || dynamicForm.get([fields.fieldname]).valid) ? 'error' : ' '"
                                         [formControlName]="fields.fieldname">
+                                </ng-container>
+
+                                <ng-container *ngSwitchCase="'group'">
+                                    
+                                    
+                                    <div class="col-sm-12">
+                                        <ng-container 
+                                            formArrayName="{{fields.fieldname}}" 
+                                            *ngFor="let a of dynamicForm.get([fields.fieldname])['controls']; let i = index">
+                                            <div class="row" style="margin-bottom: 50px;">
+                                                <div class="col-sm-10">
+                                                    <div class="row">
+                                                        <ng-container formGroupName="{{i}}">
+
+                                                            <ng-container *ngFor="let groupfield of fields.fields; let grouplst = last">
+            
+                                                                <ng-container [ngSwitch]="groupfield.fieldtype">
+                        
+                                                                    <div [ngClass]="groupfield.colspan == '1'  ? 'col-sm-12' : 'col-sm-6'">
+                        
+                                                                        <label class="col-form-label">
+                                                                            {{getLang(groupfield.fieldname, groupfield.displayname)}}
+                                                                            <span *ngIf="groupfield.required" class="text-danger">*</span>
+                                                                        </label>
+            
+                                                                        <ng-container *ngSwitchCase="'text'">
+                                                                            <mat-form-field
+                                                                                class="example-full-width">
+                                                                                <input
+                                                                                    type="text"
+                                                                                    matInput
+                                                                                    [formControlName]="groupfield.fieldname">
+                                                                            </mat-form-field>
+                                                                        </ng-container>
+                                                                    
+                                                                        <ng-container *ngSwitchCase="'long_text'">
+                                                                            <mat-form-field class="example-full-width">
+                                                                                <input
+                                                                                    type="text"
+                                                                                    matInput
+                                                                                    value
+                                                                                    [formControlName]="groupfield.fieldname">
+                                                                            </mat-form-field>
+                                                                            <mat-form-field class="example-full-width">
+                                                                                <textarea matInput> </textarea>
+                                                                            </mat-form-field>
+                                                                        </ng-container>
+                                                                    
+                                                                        <ng-container *ngSwitchCase="'checkbox'">
+                                                                            <mat-selection-list [formControlName]="groupfield.fieldname" >
+                                                                                <mat-list-option  class="mat-primary" checkboxPosition="before" *ngFor="let look of groupfield.lookupdata" [value]="look.key">
+                                                                                    {{look.value}}
+                                                                                </mat-list-option>
+                                                                            </mat-selection-list>
+                                                                        </ng-container>
+                                                                    
+                                                                        <ng-container *ngSwitchCase="'radio'">
+                                                                            <mat-radio-group
+                                                                                aria-labelledby="example-radio-group-label"
+                                                                                class="example-radio-group"
+                                                                                [formControlName]="groupfield.fieldname">
+                                                                                <mat-radio-button
+                                                                                    class="example-radio-button"
+                                                                                    *ngFor="let look of groupfield.lookupdata; let i = index"
+                                                                                    [value]="look.value"
+                                                                                    >
+                                                                                    {{look.value}}
+                                                                                </mat-radio-button>
+                                                                            </mat-radio-group>
+                                                                        </ng-container>
+                                                                    
+                                                                        <ng-container *ngSwitchCase="'list'">
+                                                                            <mat-form-field class="example-full-width">
+                                                                                <input
+                                                                                    matInput
+                                                                                    placeholder="Select"
+                                                                                    aria-label="Select"
+                                                                                    [matAutocomplete]="auto"
+                                                                                    [formControlName]="groupfield.fieldname">
+                                                                                <mat-autocomplete #auto="matAutocomplete">
+                                                                                    <mat-option *ngFor="let opt of groupfield.lookupdata" [value]="opt.value">
+                                                                                        <span>{{ opt.value }}</span>
+                                                                                    </mat-option>
+                                                                                </mat-autocomplete>
+                                                                            </mat-form-field>
+                                                                        </ng-container>
+                                                                    
+                                                                        <ng-container *ngSwitchCase="'datepicker'">
+                                                                            <mat-form-field>
+                                                                                <input
+                                                                                    matInput
+                                                                                    [min]="minDate"
+                                                                                    [max]="groupfield.maxDate ? groupfield.maxDate : maxDate"
+                                                                                    [matDatepicker]="resultPicker"
+                                                                                    [formControlName]="groupfield.fieldname"
+                                                                                    placeholder="">
+                                                                                <mat-datepicker-toggle
+                                                                                    matSuffix
+                                                                                    [for]="resultPicker">
+                                                                                </mat-datepicker-toggle>
+                                                                                <mat-datepicker #resultPicker [startAt]="startDate"></mat-datepicker>
+                                                                            </mat-form-field>
+                                                                        </ng-container>
+                                                                    
+                                                                        <ng-container *ngSwitchCase="'time_only'">
+                                                                            <mat-form-field class="example-full-width">
+                                                                                <input 
+                                                                                matInput 
+                                                                                [owlDateTimeTrigger]="dt1" 
+                                                                                [owlDateTime]="dt1"
+                                                                                [formControlName]="groupfield.fieldname">
+                                                                                <owl-date-time 
+                                                                                [pickerType]="'timer'" 
+                                                                                #dt1></owl-date-time>
+                                                                            </mat-form-field>
+                                                                        </ng-container>
+                                                                    
+                                                                        <ng-container *ngSwitchCase="'multi_selected_list'">
+                                                                            <mat-form-field class="example-full-width">
+                                                                                <mat-select
+                                                                                    [formControlName]="groupfield.fieldname"
+                                                                                    multiple>
+                                                                                    <mat-option value="">Select {{groupfield.fielddisplaytext}}</mat-option>
+                                                                                    <mat-option
+                                                                                        *ngFor="let opt of groupfield.lookupdata"
+                                                                                        [value]="opt.value">
+                                                                                        {{opt.value}}
+                                                                                    </mat-option>
+                                                                                </mat-select>
+                                                                            </mat-form-field>
+                                                                        </ng-container>
+                                                                    
+                                                                        <ng-container *ngSwitchCase="'attachment'">
+                                                                            <div class="form-group">
+                                                                                <img class="loading_{{groupfield.fieldname}}" src="assets/img/image-loader.GIF"
+                                                                                    style="height: 100px; width: 100px; display: none">
+                                                                    
+                                                                                <div class="btn btn-primary btn-file">
+                                                                    
+                                                                                    <label class="upload_button mb-0" for="fileupload_{{groupfield.fieldname}}"><i class="material-icons">cloud_upload</i> Upload </label>
+                                                                    
+                                                                                    <input
+                                                                                        type="file"
+                                                                                        id="fileupload_{{groupfield.fieldname}}"
+                                                                                        #fileInput
+                                                                                        ng2FileSelect
+                                                                                        [style.display]="'none'"
+                                                                                        [uploader]="customeUploader[groupfield.fieldname]"
+                                                                                        (change)="fileInput.value=''"
+                                                                                        multiple />
+                                                                    
+                                                                                    <input
+                                                                                        type="hidden"
+                                                                                        [id]="groupfield.fieldname"
+                                                                                        [formControlName]="groupfield.fieldname" >
+                                                                                </div>
+                                                                    
+                                                                                <div class="mt-2" >
+                                                                                    <span class="upload-tag badge badge-pill d-flex mb-2" *ngFor="let item of formImageArray[groupfield.fieldname]">
+                                                                                        <span class="d-flex flex-grow-1 align-items-center" >
+                                                                                            <i class="material-icons d-flex align-items-center mr-2">link</i>
+                                                                                            <span (click)="downloadlink(item.attachment)"> {{item.originalfilename}}.{{item.extension}}</span>
+                                                                                        </span>
+                                                                                        <i
+                                                                                            class="material-icons d-flex align-items-center justify-content-end ml-2 cursor-pointer"
+                                                                                            (click)="removeImg(item, groupfield.fieldname)">clear</i>
+                                                                                    </span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </ng-container>
+                                                                    
+                                                                        <ng-container *ngSwitchCase="'gallery'">
+                                                                            <div class="form-group">
+                                                                                
+                                                                                <div class="row membroz-row">
+                                                                                    <div class="col-xl-2 col-lg-2 col-md-3 col-sm-4 col-6 membroz-col d-flex flex-grow-1 mb-3">
+                                                                                        <span class="btn-file text-center add-upload-inner-vcenter">
+                                                                                            <label 
+                                                                                                class="upload_button mb-0 add-upload-main" 
+                                                                                                for="fileupload_{{groupfield.fieldname}}">
+                                                                                                <svg 
+                                                                                                    xmlns="http://www.w3.org/2000/svg" 
+                                                                                                    width="18.77"
+                                                                                                    height="18.77" 
+                                                                                                    viewBox="0 0 18.77 18.77">
+                                                                                                    <g transform="translate(-807.636 -666.636)">
+                                                                                                        <line 
+                                                                                                            x2="11.858" 
+                                                                                                            y2="11.858"
+                                                                                                            transform="translate(817.021 667.636) rotate(45)"
+                                                                                                            fill="none" 
+                                                                                                            stroke="#949494"
+                                                                                                            stroke-linecap="round" 
+                                                                                                            stroke-width="1" />
+                                                                                                        <line 
+                                                                                                            x1="11.858" 
+                                                                                                            y2="11.858"
+                                                                                                            transform="translate(817.021 667.636) rotate(45)"
+                                                                                                            fill="none" 
+                                                                                                            stroke="#949494"
+                                                                                                            stroke-linecap="round" 
+                                                                                                            stroke-width="1" />
+                                                                                                    </g>
+                                                                                                </svg>
+                                                                                                <div class="mt-2"> {{getLang('addimage', 'Add image')}}</div>
+                                                                                            </label>
+                                                                                            <input
+                                                                                                type="file"
+                                                                                                id="fileupload_{{groupfield.fieldname}}"
+                                                                                                #fileInput
+                                                                                                ng2FileSelect
+                                                                                                [style.display]="'none'"
+                                                                                                [uploader]="customeUploader[groupfield.fieldname]"
+                                                                                                (change)="fileInput.value=''"
+                                                                                                multiple />
+                                                                    
+                                                                                            <input
+                                                                                                type="hidden"
+                                                                                                [id]="groupfield.fieldname"
+                                                                                                [formControlName]="groupfield.fieldname" >
+                                                                                        </span>
+                                                                    
+                                                                                        <img 
+                                                                                            class="loading_{{groupfield.fieldname}}" 
+                                                                                            src="assets/img/image-loader.GIF"
+                                                                                            style="height: 100px; width: 100px; display: none">
+                                                                                        
+                                                                                    </div>
+                                                                                    <div 
+                                                                                        class="col-xl-2 col-lg-2 col-md-3 col-sm-4 col-6 membroz-col d-flex flex-grow-1 mb-3"
+                                                                                        *ngFor="let item of formImageArray[groupfield.fieldname];let i = index">
+                                                                                        <div class="position-relative d-flex">
+                                                                                            <img 
+                                                                                                [src]="item.attachment"
+                                                                                                (click)="downloadlink(item.attachment)" 
+                                                                                                class="img-fluid img-add-product">
+                                                                                                <span class="img-add-product-delete">
+                                                                                                    <button 
+                                                                                                        mat-raised-button
+                                                                                                        class="btn btn-just-icon btn-link"
+                                                                                                        (click)="removeImg(item, groupfield.fieldname)">
+                                                                                                        <i class="material-icons">cancel</i>
+                                                                                                    </button>
+                                                                                                </span>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </ng-container>
+                                                                    
+                                                                        <ng-container *ngSwitchCase="'editor'">
+                                                                            <angular-editor [formControlName]="groupfield.fieldname" [placeholder]="'Enter text here...'"></angular-editor>
+                                                                        </ng-container>
+                                                                    
+                                                                        <ng-container *ngSwitchCase="'readonly'">
+                                                                            <span style="color: red;" class="form-control-static">{{groupfield.defaultvalue}}</span>
+                                                                            <mat-form-field class="example-full-width" [hidden]="true">
+                                                                                <input
+                                                                                    matInput
+                                                                                    #firsttext
+                                                                                    type="text"
+                                                                                    class="example-margin"
+                                                                                    readonly
+                                                                                    [ngClass]="!((dynamicForm.get([groupfield.fieldname]).pristine && !dynamicSubmitted) || dynamicForm.get([groupfield.fieldname]).valid) ? 'error' : ' '"
+                                                                                    [formControlName]="groupfield.fieldname">
+                                                                            </mat-form-field>
+                                                                        </ng-container>
+                                                                    
+                                                                        <ng-container *ngSwitchCase="'disclaimer'">
+                                                                            <span style="color: red;" class="form-control-static">{{groupfield.defaultvalue}}</span>
+                                                                            <mat-form-field class="example-full-width" [hidden]="true">
+                                                                                <input
+                                                                                    matInput
+                                                                                    #firsttext
+                                                                                    type="text"
+                                                                                    class="example-margin"
+                                                                                    readonly
+                                                                                    [ngClass]="!((dynamicForm.get([groupfield.fieldname]).pristine && !dynamicSubmitted) || dynamicForm.get([groupfield.fieldname]).valid) ? 'error' : ' '"
+                                                                                    [formControlName]="groupfield.fieldname">
+                                                                            </mat-form-field>
+                                                                        </ng-container>
+                                                                    
+                                                                        <ng-container *ngSwitchCase="'mobile'">
+                                                                            <mat-form-field
+                                                                                hintLabel="Max {{groupfield?.maxlength}} characters"
+                                                                                class="example-full-width">
+                                                                                <input
+                                                                                    [maxlength]="groupfield?.maxlength" 
+                                                                                    matInput
+                                                                                    [formControlName]="groupfield.fieldname">
+                                                                            </mat-form-field>
+                                                                            
+                                                                        </ng-container>
+                                                                    
+                                                                        <ng-container *ngSwitchCase="'alternatenumber'">
+                                                                            <mat-form-field
+                                                                                hintLabel="Max {{groupfield?.maxlength}} characters"
+                                                                                class="example-full-width">
+                                                                                <input
+                                                                                    [maxlength]="groupfield?.maxlength" 
+                                                                                    matInput
+                                                                                    [formControlName]="groupfield.fieldname">
+                                                                            </mat-form-field>
+                                                                        </ng-container>
+                                                                    
+                                                                        <ng-container *ngSwitchCase="'whatsappnumber'">
+                                                                            <ngx-intl-tel-input
+                                                                                [inputId]="'adsasd'"
+                                                                                [cssClass]="'custom form-control'"
+                                                                                [ngClass]="!((dynamicForm.get([groupfield.fieldname]).pristine && !dynamicSubmitted) || dynamicForm.get([groupfield.fieldname]).valid) ? 'error' : ' '"
+                                                                                [preferredCountries]="preferredCountries"
+                                                                                [enableAutoCountrySelect]="false"
+                                                                                [enablePlaceholder]="true"
+                                                                                [searchCountryFlag]="true"
+                                                                                [searchCountryField]="[SearchCountryField.Iso2, SearchCountryField.Name]"
+                                                                                [selectFirstCountry]="false"
+                                                                                [selectedCountryISO]="groupfield.value && groupfield.value.countryCode ? groupfield.value.countryCode : CountryISO.India"
+                                                                                [maxLength]="15"
+                                                                                [phoneValidation]="true"
+                                                                                [separateDialCode]="separateDialCode"
+                                                                                [formControlName]="groupfield.fieldname">
+                                                                            </ngx-intl-tel-input>
+                                                                        </ng-container>
+                                                                    
+                                                                        <ng-container *ngSwitchCase="'lookup'">
+
+                                                                            <dynamic-autocomplete
+                                                                                [formControlName]="groupfield.fieldname"
+                                                                                [setting]="groupfield"
+                                                                                [dbvalue]="groupfield.value"
+                                                                                (added)="onItemAdded($event)">
+                                                                            </dynamic-autocomplete>
+                                                                        </ng-container>
+                                                                        
+                                                                        <ng-container *ngSwitchCase="'form'">
+
+                                                                            <ng-container *ngIf="groupfield && groupfield.multiselect; else formAutoComplete">
+                                                                                <mat-form-field class="example-full-width">
+                                                                                    <mat-select
+                                                                                        [formControlName]="groupfield.fieldname"
+                                                                                        multiple>
+                                                                                        <mat-option
+                                                                                            *ngFor="let opt of groupfield.formfieldfilterValue"
+                                                                                            [value]="opt.id">
+                                                                                            {{opt.itemName}}
+                                                                                        </mat-option>
+                                                                                    </mat-select>
+                                                                                </mat-form-field>
+                                                                            </ng-container>
+                                
+                                                                            <ng-template #formAutoComplete>
+                                                                                <dynamic-autocomplete
+                                                                                    [formControlName]="groupfield.fieldname"
+                                                                                    [setting]="groupfield"
+                                                                                    [dbvalue]="groupfield.value"
+                                                                                    (added)="onItemAdded($event)">
+                                                                                </dynamic-autocomplete>
+                                                                            </ng-template>
+                                
+                                                                        </ng-container>
+                                                                    
+                                                                        <ng-container *ngSwitchCase="'fullname'">
+                                                                            <mat-form-field
+                                                                                class="example-full-width">
+                                                                                <input
+                                                                                    type="text"
+                                                                                    matInput
+                                                                                    [formControlName]="groupfield.fieldname">
+                                                                            </mat-form-field>
+                                                                        </ng-container>
+                                                                    
+                                                                        <ng-container *ngSwitchCase="'primaryemail'">
+                                                                    
+                                                                            <mat-form-field class="example-full-width">
+                                                                                <input
+                                                                                    type="text"
+                                                                                    matInput
+                                                                                    [formControlName]="groupfield.fieldname">
+                                                                            </mat-form-field>
+                                                                        </ng-container>
+                                                                    
+                                                                        <ng-container *ngSwitchCase="'secondaryemail'">
+                                                                            <mat-form-field class="example-full-width">
+                                                                                <input
+                                                                                    type="text"
+                                                                                    matInput
+                                                                                    [formControlName]="groupfield.fieldname">
+                                                                            </mat-form-field>
+                                                                        </ng-container>
+                                                                    
+                                                                        <ng-container *ngSwitchCase="'calendar_timer'">
+                                                                    
+                                                                            <mat-form-field class="example-full-width">
+                                                                                <input 
+                                                                                    matInput
+                                                                                    [owlDateTimeTrigger]="dt2calendartime" 
+                                                                                    [owlDateTime]="dt2calendartime"
+                                                                                    [formControlName]="groupfield.fieldname">
+                                                                                <owl-date-time 
+                                                                                    [pickerType]="'both'" 
+                                                                                    #dt2calendartime 
+                                                                                    hour12Timer=true>
+                                                                                </owl-date-time>
+                                                                            </mat-form-field>
+                                                                        </ng-container>
+                                                                    
+                                                                        <ng-container *ngSwitchCase="'slide_toggle'">
+                                                                            <div class="mt-2">
+                                                                                <mat-slide-toggle
+                                                                                    class="example-margin"
+                                                                                    [checked]="groupfield.value"
+                                                                                    [formControlName]="groupfield.fieldname">
+                                                                                </mat-slide-toggle>
+                                                                            </div>
+                                                                        </ng-container>
+                                                                    
+                                                                        <ng-container *ngSwitchCase="'number'">
+                                                                            <mat-form-field class="example-full-width">
+                                                                                <input
+                                                                                    type="number"
+                                                                                    [min]="groupfield.min ? groupfield.min : -999999999999999"
+                                                                                    [max]="groupfield.max ? groupfield.max : 999999999999999"
+                                                                                    matInput
+                                                                                    [formControlName]="groupfield.fieldname">
+                                                                            </mat-form-field>
+                                                                        </ng-container>
+                                                                    
+                                                                        <ng-container *ngSwitchCase="'audio'">
+                                                                            <mat-form-field class="example-full-width">
+                                                                                <input
+                                                                                    type="text"
+                                                                                    matInput
+                                                                                    [formControlName]="groupfield.fieldname">
+                                                                            </mat-form-field>
+                                                                        </ng-container>
+                                                                    
+                                                                        <ng-container *ngSwitchCase="'formdata'">
+                                                                            <dynamic-autocomplete
+                                                                                [formControlName]="groupfield.fieldname"
+                                                                                [setting]="fields"
+                                                                                [dbvalue]="groupfield.value"
+                                                                                (added)="onItemAdded($event)">
+                                                                            </dynamic-autocomplete>
+                                                                        </ng-container>
+                                                                    
+                                                                        <ng-container *ngSwitchCase="'form_multiselect'">
+                                                                            <mat-form-field class="example-full-width">
+                                                                                <mat-select [formControlName]="groupfield.fieldname" multiple>
+                                                                                    <mat-option *ngFor="let item of groupfield.formfieldfilterValue" [value]="item.id">{{item.itemName}}</mat-option>
+                                                                                </mat-select>
+                                                                            </mat-form-field>
+                                                                        </ng-container>
+
+                                                                        <ng-container *ngSwitchCase="'category_list'">
+                                                                            <mat-form-field appearance="fill">
+                                                                                <mat-select [formControlName]="groupfield.fieldname" multiple>
+                                                                                  <mat-optgroup 
+                                                                                    *ngFor="let group of group.formfieldfilterValue" 
+                                                                                    [label]="group.name"
+                                                                                    [disabled]="group.disabled">
+                                                                                    <mat-option *ngFor="let pokemon of group.pokemon" [value]="pokemon.value">
+                                                                                      {{pokemon.viewValue}}
+                                                                                    </mat-option>
+                                                                                  </mat-optgroup>
+                                                                                </mat-select>
+                                                                              </mat-form-field>
+                                                                        </ng-container>
+                                                                    
+                                                                        <span class="help-block">{{groupfield?.description}}</span>
+                                                                    
+                                                                    </div>
+                                                                </ng-container>
+                                                            </ng-container>
+            
+                                                        </ng-container>
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-2">
+                                                    <button class="btn btn-default btn-full-width" type="button" (click)="deleteGroupItem(fields, i)" style="margin-right: 5px;">Delete</button>
+                                                </div>
+                                            </div>
+                                            
+                                        </ng-container>
+
+                                        <div class="row">
+                                            <div class="col-sm-12">
+                                                <div class="col-sm-6"></div>
+                                                <div class="col-sm-6 text-right float-right">
+                                                    <button class="btn btn-primary ml-2" type="button" (click)="addItem(fields)" style="margin-right: 5px;">Save & Add More</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    
+
                                 </ng-container>
                             </ng-container>
                         </ng-container>

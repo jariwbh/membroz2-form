@@ -23,6 +23,13 @@
                         </svg>
                     </div>
 
+
+                    <app-wf-permission *ngIf="bindId" #wfpermission [formObj]="formObj" 
+                    [schemaname]="formObj.schemaname" [bindId]="bindId"
+                    [isOnlyBtn]='false'
+                                        [bindObj]="bindIdData" (onOperation)="onOperation($event)">
+                    </app-wf-permission>
+
                     <div class="wizard-container mrt20" *ngIf="_sectionLists && _sectionLists.length !== 0">
                         <div class="tab-content">
                             <app-form-builder
