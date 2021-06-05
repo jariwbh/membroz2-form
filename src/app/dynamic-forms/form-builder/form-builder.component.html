@@ -15,7 +15,7 @@
                                     <div [ngClass]="fields.colspan == '1'  ? 'col-sm-12' : 'col-sm-6'">
 
                                         <label class="col-form-label">
-                                            {{getLang(fields.fieldname, fields.displayname)}}
+                                           {{getLang(fields.fieldname, fields.displayname)}}
                                             <span *ngIf="fields.required" class="text-danger">*</span>
                                         </label>
 
@@ -429,11 +429,9 @@
                                         </ng-container>
 
                                         <ng-container *ngSwitchCase="'rating'">
-                                            <ngb-rating 
-                                                max="{{fields.maxrating}}"
-                                                [(rate)]="fields.value"
-                                                [formControlName]="fields.fieldname">
-                                            </ngb-rating>
+                                            <div class="mt-2">
+                                                <ngb-rating [formControlName]="fields.fieldname" max=5></ngb-rating>
+                                            </div>
                                         </ng-container>
 
 
@@ -487,6 +485,7 @@
                                         [ngClass]="!((dynamicForm.get([fields.fieldname]).pristine && !dynamicSubmitted) || dynamicForm.get([fields.fieldname]).valid) ? 'error' : ' '"
                                         [formControlName]="fields.fieldname">
                                 </ng-container>
+
                             </ng-container>
                         </ng-container>
                     </div>
