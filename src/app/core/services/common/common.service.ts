@@ -190,6 +190,7 @@ export class CommonService {
 
         if (method == "POST" && (data != undefined || null)) {
           const toAdd = JSON.stringify(data);
+          console.log("urlstring", urlstring)
           return this.httpClient
             .post(urlstring, toAdd, { headers: this.configuration.headers })
             .toPromise();
