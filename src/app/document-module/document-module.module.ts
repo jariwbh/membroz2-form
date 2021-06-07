@@ -22,6 +22,8 @@ const cloudinaryLib = { Cloudinary: Cloudinary};
 import { SafeHtmlPipe } from "./safehtml.pipe";
 
 import { NgxSignaturePadModule } from "@o.krucheniuk/ngx-signature-pad";
+import { FileSaverModule } from 'ngx-filesaver';
+
 
 @NgModule({
     imports: [
@@ -36,7 +38,8 @@ import { NgxSignaturePadModule } from "@o.krucheniuk/ngx-signature-pad";
       DynamicAutocompleteModule,
       CloudinaryModule.forRoot(cloudinaryLib, config),
       FileUploadModule,
-      NgxSignaturePadModule
+      NgxSignaturePadModule,
+      FileSaverModule
     ],
     declarations: [
       DocumentModuleComponent,

@@ -3,6 +3,12 @@ import { Router, ActivatedRoute } from "@angular/router";
 
 import { BaseComponemntComponent } from '../shared/base-componemnt/base-componemnt.component';
 
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+
+import { FileSaverService } from "ngx-filesaver";
+
+
 declare const $: any;
 
 @Component({
@@ -22,9 +28,17 @@ export class DocumentModuleComponent extends BaseComponemntComponent implements 
   formfields: any [] = [];
   doctemplate: any;
 
+  checked: boolean = false;
+  submitted: boolean = false;
+  btnDisable: boolean = false;
+
+  destroy$: Subject<boolean> = new Subject<boolean>();
+
+
   constructor(
     private _route: ActivatedRoute,
-    private elementRef:ElementRef
+    private elementRef:ElementRef,
+    private _FileSaverService: FileSaverService,
   ) { 
     super()
 
@@ -35,16 +49,18 @@ export class DocumentModuleComponent extends BaseComponemntComponent implements 
   }
 
   async ngOnInit() {
-    try {
-      await super.ngOnInit();
-      await this.initializeVariables()
-      await this.getformFields()
-      await this.getLoadFormdatas()
-      await this.getLoadForm()
-    } catch (error) {
-      console.error(error)
-    } finally {
-    }
+
+    this._route.params.forEach(async (params) => {
+      try {
+        await super.ngOnInit();
+        await this.initializeVariables()
+        await this.getformFields()
+        await this.getLoadFormdatas()
+        await this.getLoadForm()
+      } catch (error) {
+        console.error(error)
+      }
+    })
   }
 
   async initializeVariables() {
@@ -54,6 +70,9 @@ export class DocumentModuleComponent extends BaseComponemntComponent implements 
     this.disableSubmitBtn = false;
     this.formfields = [];
     this.doctemplate = {};
+    this.checked = false;
+    this.submitted = false;
+    this.btnDisable = false;
     return;
   }
 
@@ -67,15 +86,23 @@ export class DocumentModuleComponent extends BaseComponemntComponent implements 
 
   public handleAnchorClick = (event: Event) => {
     // Prevent opening anchors the default way
-    event.preventDefault();
+    //event.preventDefault();
     const anchor = event.target as HTMLAnchorElement;
     this.formFieldVisibile = false;
     setTimeout(() => {
       this.selectedField = this.getformfieldObj(anchor.id)
-      if(this.selectedField) {
+      if(this.selectedField && this.selectedField.fieldtype == "datepicker") {
+        var elems = document.getElementsByName("attributename_" + this.selectedField._id);
+        for(var i = 0; i < elems.length; i++) {
+          elems[i].setAttribute("style", "color: black;");
+        }
+      } else if(this.selectedField && this.selectedField.fieldtype !== "checkbox" && this.selectedField.fieldtype !== "text" && this.selectedField.fieldtype !== "list") {
+        event.preventDefault();
         $("#myModalFormfieldPopup").click()
         this.formFieldVisibile = true;
-      }  
+      } else {
+
+      }
     });
     
     
@@ -145,6 +172,15 @@ export class DocumentModuleComponent extends BaseComponemntComponent implements 
                 }
               });
             }
+
+            if(this.tempSlectedValue && this.tempSlectedValue["property"] && this.tempSlectedValue["property"]["acknowledged"] ) {
+              this.checked = true
+            }
+
+            if(this.tempSlectedValue && this.tempSlectedValue["property"] && this.tempSlectedValue["property"]["signed"] ) {
+              this.submitted = true
+            }
+
           }
           return;
         }
@@ -159,7 +195,7 @@ export class DocumentModuleComponent extends BaseComponemntComponent implements 
 
     var url = "forms/filter";
     var method = "POST";
-      
+
     let postData = {};
     postData['search'] = [];
     postData["search"].push({"searchfield": "formname", "searchvalue": this.formObj.formname, "criteria": "eq"});
@@ -173,17 +209,6 @@ export class DocumentModuleComponent extends BaseComponemntComponent implements 
           if(data && data[0] && data[0]["doctemplate"]) {
 
             this.doctemplate = data[0]["doctemplate"];
-
-            var shortcode_regex_user = /\[\((\w+)+\.?(\w+)\.?(\w+)\)]/mg;
-              var th_user: any = this;
-              this.doctemplate.replace(shortcode_regex_user, function (match_user, code_user) {
-              var replace_str_user = match_user.replace('[(', '');
-              replace_str_user = replace_str_user.replace(')]', '');
-              if(th_user._loginUser && th_user._loginUser[replace_str_user]) {
-                var string_value = `<span style='background-color: yellow'>${th_user._loginUser[replace_str_user]}</span>`;
-                th_user.doctemplate = th_user.doctemplate.replace("$[(" + replace_str_user + ")]", string_value);
-              }
-            });
 
             var shortcode_regex = /\[{(\w+)+\.?(\w+)\.?(\w+)\}]/mg;
 
@@ -200,11 +225,12 @@ export class DocumentModuleComponent extends BaseComponemntComponent implements 
 
                 var textDisplay: any;
                 var htmlTemplate = "";
-                
-                if(formfieldObj.fieldtype == "text") { 
+
+                if(formfieldObj.fieldtype == "text") {
                   var value = formfieldObj && formfieldObj.value ? formfieldObj.value : '';
-                  htmlTemplate = "<input type='text' id='" + replace_str +"' value='"+ value +"'>"
+                  htmlTemplate = "<input type='text' name='attributename_" + replace_str +"' id='" + replace_str +"' value='"+ value +"'>"
                 } else if (formfieldObj.fieldtype == "checkbox") {
+
                   var value = formfieldObj && formfieldObj.value ? formfieldObj.value : '';
                   if(formfieldObj.lookupdata && formfieldObj.lookupdata.length > 0) {
                     formfieldObj.lookupdata.forEach(element => {
@@ -213,24 +239,51 @@ export class DocumentModuleComponent extends BaseComponemntComponent implements 
                         var valueObj = value.find(p=>p == element.key);
                         if(valueObj)  checkedString = 'checked="checked"';
                       }
-                      htmlTemplate += " <input type='checkbox' id='" + replace_str +"' "+ checkedString +">" 
+                      htmlTemplate += " <input type='checkbox' name='attributename_"+replace_str+"' id='" + replace_str +"' "+ checkedString +">"
                     });
                   }
                 } else if (formfieldObj.fieldtype == "datepicker"){
                   var value = formfieldObj && formfieldObj.value ? formfieldObj.value : '';
-                  
-                  htmlTemplate = "<input type='date' id='" + replace_str +"' value='"+ th.convertDate(value) +"'>"
+
+                  htmlTemplate = "<input type='date' name='attributename_" + replace_str +"' id='" + replace_str +"' value='"+ th.convertDate(value) +"' style='" + th.getDayClassNames(value) +  "'>"
+
+
                 } else if (formfieldObj.fieldtype == "lookup" || formfieldObj.fieldtype == "form") {
                   var value = formfieldObj && formfieldObj.value && formfieldObj.value.autocomplete_displayname ? formfieldObj.value.autocomplete_displayname : formfieldObj && formfieldObj.value ? formfieldObj.value : formfieldObj.displayname
                   htmlTemplate = "<input type='text' id='" + replace_str +"' value='"+ value +"'>"
                 } else if (formfieldObj.fieldtype == "signaturepad") {
+
                   var value = formfieldObj && formfieldObj.value ? formfieldObj.value : '';
-                  htmlTemplate = "<img id='" + replace_str +"' src='"+ value +"' style='height: 100px; width: 100px'>"
+                  if(value == "") {
+                    htmlTemplate = "<input type='text' id='" + replace_str +"' val='"+ value +"' placeholder='Signature ....' style='border: 0; border-bottom: 1px solid #000; height:100px; font-size:14pt;'>"
+                  } else {
+                    htmlTemplate = "<img id='" + replace_str +"' src='"+ value +"' style='height: 100px; width: 100px'>"
+                  }
+
+
+                } else if(formfieldObj.fieldtype == "list") {
+
+                  var value = formfieldObj && formfieldObj.value ? formfieldObj.value : '';
+                  var checkedString = '';
+                  var optionString = "";
+
+                  optionString += "<option value=''></option>";
+
+                  if(formfieldObj.lookupdata && formfieldObj.lookupdata.length > 0) {
+                    formfieldObj.lookupdata.forEach(elementLookup => {
+                      if(value == elementLookup.value) {
+                        checkedString = "selected"
+                      }
+                      optionString += "<option value='"+ elementLookup.value +"' "+ checkedString +">"+ elementLookup.value +"</option>"
+                    });
+                  }
+
+                  htmlTemplate = "<select name='attributename_" + replace_str +"' id='" + replace_str +"'> "+ optionString +" </select>"
                 } else {
                   var value = formfieldObj && formfieldObj.value ? formfieldObj.value : '';
                   htmlTemplate = "<input type='text' id='" + replace_str +"' value='"+ value +"'>"
                 }
-                
+
                 if(formfieldObj.fieldtype == "mobile" || formfieldObj.fieldtype == "alternatenumber" || formfieldObj.fieldtype == "whatsappnumber") {
                   textDisplay = formfieldObj && formfieldObj.value && formfieldObj.value.number ? formfieldObj.value.number : formfieldObj.value ? formfieldObj.value : formfieldObj.displayname
                 } else if (formfieldObj.fieldtype == "lookup" || formfieldObj.fieldtype == "form") {
@@ -238,9 +291,16 @@ export class DocumentModuleComponent extends BaseComponemntComponent implements 
                 } else {
                   textDisplay = formfieldObj && formfieldObj.value ? formfieldObj.value : formfieldObj.displayname
                 }
-                formcontrol = `<a id="${replace_str}">${htmlTemplate}</a>`;
+
+
+                if(th.btnDisable) {
+                  formcontrol = `<span id="${replace_str}">${htmlTemplate}</span>`;
+                } else {
+                  formcontrol = `<a id="${replace_str}">${htmlTemplate}</a>`;
+                }
+
               }
-              
+
               if (formcontrol) {
                 th.doctemplate = th.doctemplate.replace("$[{" + replace_str + "}]", formcontrol);
               }
@@ -252,7 +312,7 @@ export class DocumentModuleComponent extends BaseComponemntComponent implements 
     }, (error) =>{
       console.error(error);
     });
-    
+
   }
 
   convertDate(inputFormat) {
@@ -284,7 +344,21 @@ export class DocumentModuleComponent extends BaseComponemntComponent implements 
     return this.formfields.find(p=>p._id == id)
   }
 
-  submit() {
+  async submit() {
+    this.submitted = true;
+    this.btnDisable = true;
+
+    try {
+      await this.manupluatingValues()
+      await this.getLoadForm()
+      await this.saveAsDraft();
+    } catch (error) {
+      console.log("error", error);
+    }
+  }
+
+  async saveAsDraft() {
+
     var isError: boolean = false;
     if(this.formfields && this.formfields.length > 0 ) {
       this.formfields.forEach(element => {
@@ -325,7 +399,7 @@ export class DocumentModuleComponent extends BaseComponemntComponent implements 
           var url = "formdatas";
           var method = "POST";
 
-          this.tempSlectedValue["formid"] = "602a087c99e17f373c5f4e7c";
+          this.tempSlectedValue["formid"] = this.formObj._id;
 
           return this._commonService
             .commonServiceByUrlMethodDataAsync(url, method, this.tempSlectedValue)
@@ -344,6 +418,74 @@ export class DocumentModuleComponent extends BaseComponemntComponent implements 
     
       }
     });
+  }
+
+  async manupluatingValues() {
+    this.formfields.forEach(element => {
+
+      if(element.fieldtype == "text" || element.fieldtype == "list") {
+        var elems = document.getElementsByName("attributename_" + element._id);
+        for(var i = 0; i < elems.length; i++) {
+          element.value = elems[i]["value"];
+          this.tempSlectedValue['property'][element['fieldname']] = elems[i]["value"];;
+        }
+      } else if(element.fieldtype == "checkbox") {
+
+        var elems = document.getElementsByName("attributename_" + element._id);
+        for(var i = 0; i < elems.length; i++) {
+          if(elems[i]["checked"] == true) {
+            if(element.lookupdata && element.lookupdata.length > 0 && element.lookupdata[i] && element.lookupdata[i]["key"]) {
+              if(!element.value) {
+                element.value = [];
+              }
+              element.value.push(element.lookupdata[i]["key"]);
+              if(!this.tempSlectedValue['property'][element['fieldname']]) {
+                this.tempSlectedValue['property'][element['fieldname']] = [];
+              }
+              this.tempSlectedValue['property'][element['fieldname']].push(element.lookupdata[i]["key"]);
+            }
+          }
+        }
+      } else if(element.fieldtype == "datepicker") {
+        var elems = document.getElementsByName("attributename_" + element._id);
+        for(var i = 0; i < elems.length; i++) {
+          if(elems[i]["value"] && elems[i]["value"] !== "") {
+            var dateString = elems[i]["value"].split("-");
+            if(dateString && dateString[2]) {
+              var d = new Date();
+              d.setFullYear(dateString[0]);
+              d.setMonth(dateString[1] - 1);
+              d.setDate(dateString[2]);
+              element.value = d;
+              this.tempSlectedValue['property'][element['fieldname']] = d;
+            }
+          }
+        }
+      }
+    });
+    return;
+  }
+
+  public onClickpdf() {
+
+    this.btnDisable = true;
+    let printContent = document.getElementById('printid').innerHTML;
+    let postData = { 'document': printContent}
+    this._commonService
+      .generatepdf(postData)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((data) => {
+          this._FileSaverService.save(data, "downloaded.pdf");
+          this.btnDisable = false;
+      });
+  }
+
+  getDayClassNames(value: any) {
+    if(value == "") {
+      return "color: transparent"
+    } else {
+      return "color: black";
+    }
   }
 
 }
