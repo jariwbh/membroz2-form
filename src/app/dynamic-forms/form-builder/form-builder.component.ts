@@ -30,6 +30,14 @@ import swal from 'sweetalert2';
     ::ng-deep .mat-select-panel .mat-pseudo-checkbox {
       border: 2px solid !important;
     }
+
+    mat-radio-group {
+      display: block;
+      position: relative;
+      flex: auto;
+      min-width: 0;
+      
+    }
     `
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
